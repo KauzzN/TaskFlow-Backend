@@ -34,7 +34,7 @@ def login_view(request):
     return JsonResponse({
         "message": "Login realizado com sucesso",
         "id": user.id,
-        "email": user.email
+        "email": user.username
     })
     
 @csrf_exempt
