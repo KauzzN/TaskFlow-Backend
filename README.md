@@ -27,3 +27,5 @@ IDE: Visual Studio Code
 
 Status do projeto
 Em desenvolvimento (projeto de estudo)
+
+autenticação básica implementada
