@@ -27,3 +27,10 @@ IDE: Visual Studio Code
 
 Status do projeto
 Em desenvolvimento (projeto de estudo)
+
+Funcionalidades atuais:
+
+"Autenticação  (Login, cadastro, logout)"
+"API baseada em json"
+"Persistencia com SQlite"
+
