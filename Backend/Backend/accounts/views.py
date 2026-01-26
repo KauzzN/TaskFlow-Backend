@@ -1,41 +1,94 @@
-from django.contrib.auth import authenticate, login, logout
+import jwt
+import json
+from datetime import datetime, timedelta
+
+from django.conf import settings
+from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-import json
 
 # Create your views here.
+def generate_jwt_token(user):
+    payload = {
+        "user_id": user.id,
+        "username": user.username,
+        "iat": datetime.utcnow(),
+        "exp": datetime.utcnow() + timedelta(hours=1)
+    }
+    
+    token = jwt.encode(
+        payload,
+        settings.SECRET_KEY,
+        algorithm="HS256"
+    )
+    
+    return token
+
+def get_user_from_token(request):
+    auth_header = request.headers.get("Authorization")
+    
+    if not auth_header:
+        return None
+    
+    try:
+        token = auth_header.split(" ")[1]
+        
+        payload = jwt.decode(
+            token,
+            settings.SECRET_KEY,
+            algorithms=["HS256"]
+        )
+        
+        user_id = payload.get("user_id")
+        return User.objects.get(id=user_id)
+    
+    except (jwt.ExpiredSignatureError, jwt.InvalidTokenError, User.DoesNotExist):
+        return None
+
 @csrf_exempt
 def login_view(request):
     if request.method != "POST":
         return JsonResponse({
             "error": "Método não permitido"
         }, status=405)
+    
+    if not request.content_type.startswith("application/json"):
+        return JsonResponse({
+            "error": "Content-type deve ser application/json"
+        }, status=400)
         
-    data = json.loads(request.body)
+    try:
+        data = json.loads(request.body.decode("utf-8"))
+    except(UnicodeDecodeError, json.JSONDecodeError):
+        return JsonResponse({
+            "error": "Json inválido"
+        }, status=400)
     
-    email = data.get("email")
     password = data.get("password")
-    user = data.get("username")
+    username = data.get("username")
     
-    if not email or not password or not user:
+    if not all([password, username]):
         return JsonResponse({
             "error": "Dados incompletos"
         }, status=400)
         
-    user = authenticate(username=user, email=email, password=password)
+    user = authenticate(username=username, password=password)
     
     if user is None:
         return JsonResponse({
             "error": "Credenciais inválidas"
         }, status=401)
         
-    login(request, user)
+    token = generate_jwt_token(user)
     
     return JsonResponse({
         "message": "Login realizado com sucesso",
-        "id": user.id,
-        "email": user.username
+        "token": token,
+        "user": {
+            "id": user.id,
+            "username": user.username
+        }
     })
     
 @csrf_exempt
@@ -52,8 +105,7 @@ def signIn_view(request):
         }, status=400)
         
     try:
-        body = request.body.decode("utf-8")
-        data = json.loads(body)
+        data = json.loads(request.body.decode("utf_8"))
     except (UnicodeDecodeError, json.JSONDecodeError):
         return JsonResponse({
             "error": "Json invalido"    
@@ -88,41 +140,32 @@ def signIn_view(request):
         password=password
     )
     
+    token = generate_jwt_token(user)
+    
     return JsonResponse({
-        "message": "Conta registrada com sucesso",
-        "Id": user.id,
-        "email": user.email,
-        "usuario": user.username
+        "message": "Conta criada com sucesso",
+        "token": token,
+        "user": {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email
+        }
     }, status=201)
     
 @csrf_exempt
 def check_login_view(request):
     
-    user = request.user
+    user = get_user_from_token(request)
     
-    if request.user.is_authenticated:
+    if not user:
         return JsonResponse({
-            "message": "Logado",
-            "ID": user.id,
-            "email": user.username
-        })
+            "error": "Credenciais inválidas"
+        }, status=401)
         
     return JsonResponse({
-        "error": "Usuario desconectado"
-    }, status=401)
+        "message": "Usuário autenticado",
+        "id": user.id,
+        "username": user.username,
+        "email": user.email
+    })
     
-@csrf_exempt
-def logout_view(request):
-    
-    user = request.user
-    
-    if request.user.is_authenticated:
-        logout(request)
-        
-        return JsonResponse({
-            "message": "Logout efetuado com sucesso"
-        })
-        
-    return JsonResponse({
-        "error": "Usuario não encontrado"
-    }, status=401)
