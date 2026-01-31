@@ -30,7 +30,7 @@ Em desenvolvimento (projeto de estudo)
 
 Funcionalidades atuais:
 
-"Autenticação  (Login, cadastro, logout)"
+"Autenticação com token (Login, cadastro, logout)"
 "API baseada em json"
 "Persistencia com SQlite"
 
