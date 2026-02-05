@@ -62,4 +62,27 @@ def create_task_view(request):
         }
     },status=201)
     
-    
+@csrf_exempt
+@jwt_required
+def read_task_view(request):
+    if request.method != "GET":
+        return JsonResponse({
+            "error": "método não permitido"
+        }, status=405)
+        
+    task_list = []
+        
+    for task in Task.objects.filter(user = request.user):
+        task_data = {
+            "id": task.id,
+            "title": task.title,
+            "description": task.description,
+            "is_done": task.is_done,
+            "created_at": task.created_at
+        }
+        
+        task_list.append(task_data)
+    return JsonResponse({
+        "count": len(task_list),
+        "tasks": task_list
+        }, status=200)

@@ -7,7 +7,7 @@ from django.contrib.auth.models import User
 def jwt_required(view_func):
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
-        auth_header = request.header.get("Authorization")
+        auth_header = request.headers.get("Authorization")
         
         if not auth_header:
             return JsonResponse({
@@ -16,7 +16,7 @@ def jwt_required(view_func):
             
         
         try:
-            token = auth_header.split("")[1]
+            token = auth_header.split(" ")[1]
             
             payload = jwt.decode(
                 token,
