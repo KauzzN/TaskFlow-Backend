@@ -86,3 +86,28 @@ def read_task_view(request):
         "count": len(task_list),
         "tasks": task_list
         }, status=200)
+
+@csrf_exempt
+@jwt_required
+def find_task_view(request, task_id):
+    if request.method != "GET":
+        return JsonResponse({
+            "error": "método não permitido"
+        }, status=405)
+
+    try:
+        task = Task.objects.get(id=task_id, user=request.user)
+    except Task.DoesNotExist:
+        return JsonResponse({
+            "error": "Task não encontrada"
+        }, status=404)
+    
+    return JsonResponse({
+        "task": {
+            "id": task.id,
+            "title": task.title,
+            "description": task.description,
+            "is_done": task.is_done,
+            "created_at": task.created_at
+        }
+    }, status=200)
