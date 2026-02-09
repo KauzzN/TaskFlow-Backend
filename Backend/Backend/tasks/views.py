@@ -194,5 +194,24 @@ def update_task_view(request, task_id):
             "created_at": task.created_at
         }
     }, status=200)
-    
 
+@csrf_exempt
+@jwt_required
+def delete_task_view(request, task_id):
+    if request.method != "DELETE":
+        return JsonResponse({
+            "error": "Método não permitido"
+        }, status=405)
+    
+    try:
+        task = Task.objects.get(id=task_id, user=request.user)
+    except Task.DoesNotExist:
+        return JsonResponse({
+            "error": "task não encontrada"
+        }, status=404)
+    
+    task.delete()
+
+    return JsonResponse({
+        "message": "task deletada com sucesso"
+    }, status=200)
