@@ -1,10 +1,13 @@
 import jwt
 import json
+import uuid
 from datetime import datetime, timedelta
 
+from django.utils import timezone
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
+from accounts.models import RefreshToken
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
@@ -23,6 +26,19 @@ def generate_jwt_token(user):
         algorithm="HS256"
     )
     
+    return token
+
+def generate_refresh_token(user):
+    token = str(uuid.uuid4())
+
+    expires_at = timezone.now() + timedelta(days=7)
+
+    RefreshToken.objects.create(
+        user=user,
+        token=token,
+        expires_at=expires_at
+    )
+
     return token
 
 def get_user_from_token(request):
@@ -45,6 +61,48 @@ def get_user_from_token(request):
     
     except (jwt.ExpiredSignatureError, jwt.InvalidTokenError, User.DoesNotExist):
         return None
+
+@csrf_exempt
+def refresh_token_view(request):
+    if request.method != "POST":
+        return JsonResponse({
+            "error": "método não permitido"
+        }, status=405)
+    
+    try:
+        data = json.loads(request.body.decode("utf-8"))
+    except(UnicodeDecodeError, json.JSONDecodeError):
+        return JsonResponse({
+            "error": "json inválido"
+        }, status=400)
+    
+    refresh_token_value = data.get("refresh_token")
+
+    if not refresh_token_value:
+        return JsonResponse({
+            "error": "refresh_token é obrigatorio"
+        }, status=400)
+    
+    try:
+        refresh = RefreshToken.objects.get(token=refresh_token_value)
+    except RefreshToken.DoesNotExist:
+        return JsonResponse({
+            "error": "refresh token inválido"
+        }, status=401)
+    
+    if refresh.is_expired():
+        refresh.delete()
+        return JsonResponse({
+            "error": "refresh token expirado"
+        }, status=401)
+    
+    user = refresh.user
+
+    new_access_token = generate_jwt_token(user)
+
+    return JsonResponse({
+        "token": new_access_token
+    }, status=200)
 
 @csrf_exempt
 def login_view(request):
