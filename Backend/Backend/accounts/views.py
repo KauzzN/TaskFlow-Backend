@@ -90,7 +90,7 @@ def refresh_token_view(request):
             "error": "refresh token inválido"
         }, status=401)
     
-    if refresh.is_expired():
+    if refresh.is_expiret():
         refresh.delete()
         return JsonResponse({
             "error": "refresh token expirado"
@@ -101,7 +101,7 @@ def refresh_token_view(request):
     new_access_token = generate_jwt_token(user)
 
     return JsonResponse({
-        "token": new_access_token
+        "access_token": new_access_token
     }, status=200)
 
 @csrf_exempt
@@ -139,10 +139,13 @@ def login_view(request):
         }, status=401)
         
     token = generate_jwt_token(user)
+
+    refresh_token = generate_refresh_token(user)
     
     return JsonResponse({
         "message": "Login realizado com sucesso",
         "token": token,
+        "refresh_token": refresh_token,
         "user": {
             "id": user.id,
             "username": user.username
