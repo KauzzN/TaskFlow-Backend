@@ -1,4 +1,6 @@
 import jwt
+import secrets
+import hashlib
 import json
 import uuid
 from datetime import datetime, timedelta
@@ -29,17 +31,19 @@ def generate_jwt_token(user):
     return token
 
 def generate_refresh_token(user):
-    token = str(uuid.uuid4())
+    raw_token = secrets.token_urlsafe(64)
+
+    token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
 
     expires_at = timezone.now() + timedelta(days=7)
 
     RefreshToken.objects.create(
         user=user,
-        token=token,
+        token_hash=token_hash,
         expires_at=expires_at
     )
 
-    return token
+    return raw_token
 
 def get_user_from_token(request):
     auth_header = request.headers.get("Authorization")
@@ -76,15 +80,17 @@ def refresh_token_view(request):
             "error": "json inválido"
         }, status=400)
     
-    refresh_token_value = data.get("refresh_token")
+    incomming_token = data.get("refresh_token")
 
-    if not refresh_token_value:
+    if not incomming_token:
         return JsonResponse({
             "error": "refresh_token é obrigatorio"
         }, status=400)
     
+    token_hash = hashlib.sha256(incomming_token.encode()).hexdigest()
+    
     try:
-        refresh = RefreshToken.objects.get(token=refresh_token_value)
+        refresh = RefreshToken.objects.get(token_hash=token_hash)
     except RefreshToken.DoesNotExist:
         return JsonResponse({
             "error": "refresh token inválido"
@@ -98,10 +104,15 @@ def refresh_token_view(request):
     
     user = refresh.user
 
+    new_refresh_token = generate_refresh_token(user)
+
     new_access_token = generate_jwt_token(user)
 
+    refresh.delete()
+
     return JsonResponse({
-        "access_token": new_access_token
+        "access_token": new_access_token,
+        "refresh_token": new_refresh_token
     }, status=200)
 
 @csrf_exempt
@@ -151,10 +162,51 @@ def login_view(request):
             "username": user.username
         }
     })
+
+@csrf_exempt
+def logout_view(request):
+    if request.method != "POST":
+        return JsonResponse({
+            "error": "método não permitido"
+        }, status=405)
+
+    if not request.content_type.startswith("application/json"):
+        return JsonResponse({
+            "error": "content_type deve ser application/json"
+        }, status=400)
+    
+    try:
+        data = json.loads(request.body.decode("utf-8"))
+    except(UnicodeDecodeError, json.JSONDecodeError):
+        return JsonResponse({
+            "error": "json inválido"
+        }, status=400)
+    
+    incomming_token = data.get("refresh_token")
+
+    if not incomming_token:
+        return JsonResponse({
+            "error": "refresh token é obrigatorio"
+        }, status=401)
+    
+    token_hash = hashlib.sha256(incomming_token.encode()).hexdigest()
+    
+    try:
+        refresh = RefreshToken.objects.get(token_hash=token_hash)
+    except RefreshToken.DoesNotExist:
+        return JsonResponse({
+            "error": "refresh token inválido"
+        }, status=401)
+    
+    refresh.delete()
+
+    return JsonResponse({
+        "message": "logout bem sucedido"
+    }, status=200)
+
     
 @csrf_exempt
 def signIn_view(request):
-    
     if request.method != "POST":
         return JsonResponse({
             "error": "Método não permitido"
@@ -229,4 +281,3 @@ def check_login_view(request):
         "username": user.username,
         "email": user.email
     })
-    
