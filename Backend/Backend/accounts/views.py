@@ -163,7 +163,7 @@ def check_login_view(request):
         }, status=401)
         
     return JsonResponse({
-        "message": "Usuário autenticado",
+        "message": "Usuário autenticado com sucesso",
         "id": user.id,
         "username": user.username,
         "email": user.email
