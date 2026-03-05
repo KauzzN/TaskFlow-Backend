@@ -115,7 +115,6 @@ def find_task_view(request, task_id):
 @csrf_exempt
 @jwt_required
 def update_task_view(request, task_id):
-    print("CHEGOU NA UPDATE VIEW", request.method)
     if request.method != "PATCH":
         return JsonResponse({
             "error": "método não permitido"
