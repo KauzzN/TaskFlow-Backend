@@ -22,7 +22,7 @@ def tasks_view(request):
     if request.method =="GET":
 
         tasks = Task.objects.filter(user=request.user)
-        task_list = [serialize_task(task) for tas in tasks]
+        task_list = [serialize_task(task) for task in tasks]
 
         return JsonResponse({
             "count": len(task_list),

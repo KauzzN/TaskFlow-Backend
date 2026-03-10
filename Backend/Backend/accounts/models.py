@@ -4,10 +4,18 @@ from django.utils import timezone
 
 # Create your models here.
 class RefreshToken(models.Model):
+    
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    
     token_hash = models.CharField(max_length=64, unique=True)
-    expires_at = models.DateTimeField()
+    
     created_at = models.DateTimeField(auto_now_add=True)
+    
+    expires_at = models.DateTimeField()
+    
+    revoked = models.BooleanField(default=False)
+    
 
-    def is_expiret(self):
+    def is_expired(self):
+        
         return timezone.now() >= self.expires_at
