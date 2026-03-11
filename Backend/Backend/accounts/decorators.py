@@ -24,7 +24,7 @@ def jwt_required(view_func):
                 algorithms=["HS256"]
             )
             
-            user_id = payload.get("user_id")
+            user_id = payload.get("sub")
             
             user = User.objects.get(id=user_id)
             
@@ -35,7 +35,7 @@ def jwt_required(view_func):
                 "error": "Token expirado"
             }, status=401)
             
-        except (jwt.InvalidTokenError, User.DoesNotExist, IndexError):
+        except Exception:
             return JsonResponse({
                 "error": "Token inválido"
             }, status=401)

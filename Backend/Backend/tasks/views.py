@@ -1,88 +1,112 @@
 import json
 from django.http import JsonResponse
-from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from accounts.decorators import jwt_required
 from .models import Task
 
-# Create your views here.
+from .services import (
+    create_task,
+    get_task,
+    get_tasks,
+    update_task,
+    delete_task
+)
+
+from .utils import parse_json_body, serialize_task
+
 
 @csrf_exempt
 @jwt_required
-def create_task_view(request):
-    if request.method != "POST":
+def tasks_view(request):
+
+    if request.method =="GET":
+
+        tasks = Task.objects.filter(user=request.user)
+        task_list = [serialize_task(task) for task in tasks]
+
         return JsonResponse({
-            "error": "metodo não permitido"
-        },status=405)
-        
+            "count": len(task_list),
+            "tasks": task_list
+        })
     
-    if not request.content_type.startswith("application/json"):
+    elif request.method == "POST":
+        
+        data, error = parse_json_body(request)
+        if error:
+            return error
+        
+        title = data.get("title")
+        description = data.get("description", "")
+
+        if not title:
+            return JsonResponse({
+                "error": "titulo obrigatorio"
+            }, status=400)
+        
+        task, duplicate = create_task(request.user, title, description)
+
+        if duplicate:
+            return JsonResponse({
+                "error": "você ja possui uma task com esse titulo"
+            }, status=409)
+
         return JsonResponse({
-            "error": "content_type deve ser application/json"
-        }, status=400)
-        
-    try:
-        data = json.loads(request.body.decode("utf-8"))
-        
-    except (UnicodeDecodeError, json.JSONDecodeError):
-        return JsonResponse({
-            "error": "json inválido"
-        }, status=400)
-        
-    title = data.get("title")
-    description = data.get("description")
+            "message": "task criada com sucesso",
+            "task": serialize_task(task)
+        }, status=201)
     
-    if description is None:
-        description = ""
-    
-    if not title:
-        return JsonResponse({
-            "error": "titulo não foi enviado"
-        }, status=400)
-    
-    if Task.objects.filter(user=request.user,title=title).exists():
-        return JsonResponse({
-            "error": "você já possui uma task com esse titulo"
-        }, status =409)
-        
-    task = Task.objects.create(
-        user=request.user,
-        title=title,
-        description=description
-    )
-    
-    return JsonResponse({
-        "message": "task criada com sucesso",
-        "task": {
-            "id": task.id,
-            "title": task.title,
-            "description": task.description,
-            "is_done": task.is_done,
-            "created_at": task.created_at
-        }
-    },status=201)
-    
+    return JsonResponse({"error": "método não permitido"}, status=405)
+
+
 @csrf_exempt
 @jwt_required
-def read_task_view(request):
-    if request.method != "GET":
+def task_detail_view(request, task_id):
+
+    task = get_task(request.user, task_id)
+
+    if not task:
         return JsonResponse({
-            "error": "método não permitido"
-        }, status=405)
+            "error": "task não encontrada"
+        }, status=404)
+
+    if request.method == "GET":
+
+        return JsonResponse({
+            "task": serialize_task(task)
+        })
+    
+    elif request.method == "PATCH":
+
+        data, error = parse_json_body(request)
+        if error:
+            return error
+
+        if not task:
+            return JsonResponse({
+                "error": "task não encontrada"
+            }, status=404)
         
-    task_list = []
+        updated = update_task(task, data)
+
+        if not updated:
+            return JsonResponse({
+                "message": "nenhuma alteração realizada"
+            })
         
-    for task in Task.objects.filter(user = request.user):
-        task_data = {
-            "id": task.id,
-            "title": task.title,
-            "description": task.description,
-            "is_done": task.is_done,
-            "created_at": task.created_at
-        }
-        
-        task_list.append(task_data)
+        return JsonResponse({
+            "message": "task atualizada",
+            "task": serialize_task(task)
+        })
+    
+    elif request.method == "DELETE": 
+
+        delete_task(task)
+
+        return JsonResponse({
+            "message": "task deletada com sucesso"
+        })
+    
+
     return JsonResponse({
-        "count": len(task_list),
-        "tasks": task_list
-        }, status=200)
+        "error": "método não permitido"
+    }, status=405)
