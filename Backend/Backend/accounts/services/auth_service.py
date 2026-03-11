@@ -1,4 +1,4 @@
-from django.contrib.auth import aauthenticate
+from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from accounts.services.token_service import generate_tokens
 from accounts.repositories.token_repository import (
@@ -28,7 +28,7 @@ def register_user(username, email, password):
     return {
         "user": { 
             "id": user.id,
-            "userna,e": user.username,
+            "username": user.username,
             "email": user.email
         },
         "tokens": tokens
@@ -37,7 +37,7 @@ def register_user(username, email, password):
 
 def login_user(username, password):
     
-    user = aauthenticate(username=username, password=password)
+    user = authenticate(username=username, password=password)
     
     if not user:
         raise Exception("credenciais inválidas")

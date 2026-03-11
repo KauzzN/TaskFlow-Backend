@@ -16,7 +16,7 @@ def login_view(request):
         return JsonResponse({"error": "método não permitido"}, status=405)
     
     try:
-        data = json.loads(request.body)
+        data = json.loads(request.body.decode("utf-8"))
     except:
         return JsonResponse({"error": "json inválido"}, status=400)
     
