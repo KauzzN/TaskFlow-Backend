@@ -1,4 +1,5 @@
 import json
+import logging
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from accounts.services.auth_service import (
@@ -8,24 +9,46 @@ from accounts.services.auth_service import (
     logout_user
 )
 
+logger = logging.getLogger(__name__)
+
 
 @csrf_exempt
 def login_view(request):
     
+    logger.warning("TESTE_LOG_LOGIN")
+    
     if request.method != "POST":
+        logger.warning("login_method_not_allowed", extra={
+            "method": request.method
+        })
+        
         return JsonResponse({"error": "método não permitido"}, status=405)
     
     try:
         data = json.loads(request.body.decode("utf-8"))
-    except:
+        
+    except Exception:
+        
+        logger.warning("login_invalid_json")
+        
         return JsonResponse({"error": "json inválido"}, status=400)
+    
+    username = data.get("username")
+    
+    logger.info("login_attempt", extra={
+        "username": username
+    })
     
     try:
         
         tokens = login_user(
-            data.get("username"),
+            username,
             data.get("password")
         )
+        
+        logger.info("login_success", extra={
+            "username": username
+        })
         
         return JsonResponse({
             "success": True,
@@ -33,6 +56,11 @@ def login_view(request):
         })
         
     except Exception as e:
+        
+        logger.warning("login_failed", extra={
+            "username": username,
+            "error": str(e)
+        })
         
         return JsonResponse({
             "success": False,
