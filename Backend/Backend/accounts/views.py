@@ -15,8 +15,6 @@ logger = logging.getLogger(__name__)
 @csrf_exempt
 def login_view(request):
     
-    logger.warning("TESTE_LOG_LOGIN")
-    
     if request.method != "POST":
         logger.warning("login_method_not_allowed", extra={
             "method": request.method
@@ -70,19 +68,31 @@ def login_view(request):
         
 @csrf_exempt
 def refresh_token_view(request):
-    
+
     if request.method != "POST":
+        logger.warning("refresh_session_method_not_allowed", extra={
+            "method": request.method
+        })
         return JsonResponse({"error": "método não permitido"}, status=405)
     
     try:
         data = json.loads(request.body)
-    except:
+
+    except json.JSONDecodeError:
+        logger.warning("refresh_json_invalid")
+
         return JsonResponse({"error": "json inválido"}, status=400)
-    
+   
+    logger.info("refresh_attempt")
+
     try:
         
         tokens = refresh_session(data.get("refresh_token"))
-        
+       
+        logger.info("refresh_success", extra={
+            "user": request.user
+        })
+
         return JsonResponse({
             "success": True,
             "data": tokens
@@ -90,6 +100,10 @@ def refresh_token_view(request):
         
     except Exception as e:
         
+        logger.warning("refresh_failed", extra={
+            "error": str(e)
+        })
+
         return JsonResponse({
             "success": False,
             "error": str(e)
@@ -149,4 +163,6 @@ def register_view(request):
         return JsonResponse({
             "success": False,
             "error": str(e)
+            
+
         }, status=400)
