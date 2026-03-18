@@ -1,3 +1,4 @@
+import logging
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from accounts.services.token_service import generate_tokens
@@ -6,8 +7,9 @@ from accounts.repositories.token_repository import (
     revoke_token,
     delete_token
 )
-from accounts.utils.jwt_utils import generate_access_token
 
+
+logger = logging.getLogger(__name__)
 
 def register_user(username, email, password):
     
@@ -26,7 +28,7 @@ def register_user(username, email, password):
     tokens = generate_tokens(user)
     
     return {
-        "user": { 
+        "user": {
             "id": user.id,
             "username": user.username,
             "email": user.email
@@ -36,12 +38,19 @@ def register_user(username, email, password):
 
 
 def login_user(username, password):
-    
+
     user = authenticate(username=username, password=password)
     
+    logger.info("login_user_authenticated", extra={
+    "user": username
+    })
+
     if not user:
+        logger.warning("login_invalid_credentials")
+
         raise Exception("credenciais inválidas")
     
+        
     return generate_tokens(user)
 
 
