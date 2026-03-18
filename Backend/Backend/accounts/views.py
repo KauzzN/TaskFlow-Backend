@@ -33,10 +33,6 @@ def login_view(request):
     
     username = data.get("username")
     
-    logger.info("login_attempt", extra={
-        "username": username
-    })
-    
     try:
         
         tokens = login_user(
@@ -44,21 +40,12 @@ def login_view(request):
             data.get("password")
         )
         
-        logger.info("login_success", extra={
-            "username": username
-        })
-        
         return JsonResponse({
             "success": True,
             "data": tokens
         })
         
     except Exception as e:
-        
-        logger.warning("login_failed", extra={
-            "username": username,
-            "error": str(e)
-        })
         
         return JsonResponse({
             "success": False,
@@ -88,10 +75,6 @@ def refresh_token_view(request):
     try:
         
         tokens = refresh_session(data.get("refresh_token"))
-       
-        logger.info("refresh_success", extra={
-            "user": request.user
-        })
 
         return JsonResponse({
             "success": True,
@@ -99,10 +82,6 @@ def refresh_token_view(request):
         })
         
     except Exception as e:
-        
-        logger.warning("refresh_failed", extra={
-            "error": str(e)
-        })
 
         return JsonResponse({
             "success": False,

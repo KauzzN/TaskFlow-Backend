@@ -13,10 +13,26 @@ logger = logging.getLogger(__name__)
 
 def register_user(username, email, password):
     
+    logger.info("register_attempt", extra={
+        "user": username,
+        "id": user.id
+    })
+
+
     if User.objects.filter(username=username).exists():
+        
+        logger.warning("register_user_exists", extra={
+            "username": username
+        })
+
         raise Exception("username já existe")
-    
+
     if User.objects.filter(email=email).exists():
+        
+        logger.warning("register_email_exists", extra={
+            "email": email
+        })
+
         raise Exception("email já cadastrado")
     
     user = User.objects.create_user(
@@ -26,7 +42,12 @@ def register_user(username, email, password):
     )
     
     tokens = generate_tokens(user)
-    
+   
+    logger.info("register_success", extra={
+        "user": user.username,
+        "id": user.id
+    })
+
     return {
         "user": {
             "id": user.id,
@@ -41,15 +62,21 @@ def login_user(username, password):
 
     user = authenticate(username=username, password=password)
     
-    logger.info("login_user_authenticated", extra={
-    "user": username
+    logger.info("login_attempt", extra={
+    "username": username,
+    "id": user.id 
     })
+    
 
     if not user:
         logger.warning("login_invalid_credentials")
 
         raise Exception("credenciais inválidas")
     
+    logger.info("login_sucess", extra={
+        "user": username,
+        "id": user.id
+    }) 
         
     return generate_tokens(user)
 
