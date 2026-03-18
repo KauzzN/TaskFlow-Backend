@@ -1,7 +1,15 @@
+import logging
 from .models import Task
+
+logger = logging.getLogger(__name__)
 
 
 def create_task(user, title, description=""):
+
+    logger.info("create_task_attempt", extra={
+        "user": user.username,
+        "id": user.id
+    })
 
     if Task.objects.filter(user=user, title=title).exists():
         return None, "duplicate"
@@ -11,24 +19,46 @@ def create_task(user, title, description=""):
         title=title,
         description=description
     )
+    
+    logger.info("task_created", extra={
+        "user": user.username,
+        "id": user.id
+    })
 
     return task, None
 
 
 def get_tasks(user):
 
+    logger.info("listing_user_tasks", extra={
+        "user": user.username,
+        "id": user.id
+    })
+
     return Task.objects.filter(user=user)
 
 
 def get_task(user, task_id):
 
+    logger.info("finding_user_task", extra={
+        "user": user.username,
+        "id": user.id
+    })
+
     try:
         return Task.objects.get(id=task_id, user=user)
     except Task.DoesNotExist:
+
+        logger.warning("user_task_unexists", extra={
+            "user": user.username,
+            "id": user.id
+        })
         return None
     
     
 def update_task(task, data):
+
+    logger.info("update_task_attempt")
 
     updated = False
 
@@ -47,9 +77,13 @@ def update_task(task, data):
     if updated:
         task.save()
 
+    logger.info("task_updated_success")
+
     return updated
 
 
 def delete_task(task):
+
+    logger.info("delete_task_success")
 
     task.delete()

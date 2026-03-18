@@ -70,7 +70,6 @@ def refresh_token_view(request):
 
         return JsonResponse({"error": "json inválido"}, status=400)
    
-    logger.info("refresh_attempt")
 
     try:
         
@@ -94,11 +93,18 @@ def refresh_token_view(request):
 def logout_view(request):
     
     if request.method != "POST":
+        logger.warning("logout_session_method_not_allowed", extra={
+            "method": request.method
+        })
+
         return JsonResponse({"error": "método não permitido"}, status=405)
     
     try:
         data = json.loads(request.body)
+
     except:
+        logger.warning("logout_json_invalid")
+
         return JsonResponse({"error": "json inválido"}, status=400)
 
     logout_user(data.get("refresh_token"))
@@ -112,12 +118,19 @@ def logout_view(request):
 @csrf_exempt
 def register_view(request):
     
-    if request.method != "POST": 
+    if request.method != "POST":
+        logger.warning("register_session_method_not_allowed", extra={
+            "method": request.method
+        })
+
         return JsonResponse({"error": "método não permitido"}, status=405)
     
     try:
         data = json.loads(request.body)
+
     except:
+        logger.warning("register_json_invalid")
+
         return JsonResponse({"error": "json inválido"}, status=400)
 
     try:

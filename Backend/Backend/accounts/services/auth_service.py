@@ -15,14 +15,14 @@ def register_user(username, email, password):
     
     logger.info("register_attempt", extra={
         "user": username,
-        "id": user.id
+        "id": "-"
     })
 
 
     if User.objects.filter(username=username).exists():
         
         logger.warning("register_user_exists", extra={
-            "username": username
+            "user": username
         })
 
         raise Exception("username já existe")
@@ -63,8 +63,8 @@ def login_user(username, password):
     user = authenticate(username=username, password=password)
     
     logger.info("login_attempt", extra={
-    "username": username,
-    "id": user.id 
+    "user": username,
+    "id": user.id if user else "-"
     })
     
 
@@ -72,7 +72,7 @@ def login_user(username, password):
         logger.warning("login_invalid_credentials")
 
         raise Exception("credenciais inválidas")
-    
+
     logger.info("login_sucess", extra={
         "user": username,
         "id": user.id
@@ -84,26 +84,46 @@ def login_user(username, password):
 def refresh_session(refresh_token):
     
     token = get_refresh_token(refresh_token)
+
+    logger.info("refresh_attempt")
     
     if not token:
+        
+        logger.warning("refresh_invalid_token")
+
         raise Exception("refresh token inválido")
     
     if token.revoked or token.is_expired():
+
+        logger.warning("refresh_token_expired")
+
         delete_token(token)
         raise Exception("refresh token inválido")
     
     user = token.user
-    
+
     revoke_token(token)
+
+    logger.info("refresh_success", extra={
+        "user": user.username,
+        "id": user.id
+    })
     
     return generate_tokens(user)
 
 
 def logout_user(refresh_token):
-    
+   
+    logger.info("logout_attempt")
+
     token = get_refresh_token(refresh_token)
     
     if not token:
+        
+        logger.warning("logout_token_inexists")
+
         return
     
+    logger.info("logout_success")
+
     revoke_token(token)
