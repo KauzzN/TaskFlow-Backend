@@ -1,4 +1,3 @@
-import json
 import logging
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -23,15 +22,10 @@ def tasks_view(request):
 
     if request.method =="GET":
 
-        logger.info("read_task_attempt")
+        logger.info("read_task_request")
 
-        tasks = Task.objects.filter(user=request.user)
+        tasks = get_tasks(request.user)
         task_list = [serialize_task(task) for task in tasks]
-
-        logger.info("read_task_success", extra={
-            "user": request.user.username,
-            "id": request.user.id
-        })
 
         return JsonResponse({
             "count": len(task_list),
@@ -40,7 +34,7 @@ def tasks_view(request):
     
     elif request.method == "POST":
        
-        logger.info("create_task_attempt", extra={
+        logger.info("create_task_request", extra={
             "user": request.user.username,
             "id": request.user.id
         })
