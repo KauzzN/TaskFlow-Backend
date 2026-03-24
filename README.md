@@ -1,6 +1,6 @@
 # TaskFlow – Backend
 
-TaskFlow é um projeto de estudo focado no desenvolvimento de um backend para gerenciamento de tarefas diárias.
+TaskFlow é um projeto de estudo divido entre backend e frontend, o taskflow-backend é focado no desenvolvimento de um backend para gerenciamento de tarefas diárias.
 O objetivo é construir uma API REST capaz de se integrar com um frontend, explorando boas práticas de arquitetura backend, autenticação de usuários e persistência de dados.
 
 O projeto simula a base de um sistema real de gerenciamento de tarefas, onde usuários podem criar e organizar suas atividades de forma segura.
