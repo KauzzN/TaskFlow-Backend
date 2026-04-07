@@ -10,8 +10,9 @@ colorama==0.4.6
 crashtest==0.4.1
 cryptography==46.0.5
 distlib==0.4.0
-Django==6.0.1
+Django==5.2.12
 django-cors-headers==4.9.0
+django-prometheus==2.4.1
 djangorestframework==3.16.1
 dulwich==0.25.2
 fastjsonschema==2.21.2
@@ -35,10 +36,12 @@ pkginfo==1.12.1.2
 platformdirs==4.5.1
 poetry==2.3.1
 poetry-core==2.3.0
+prometheus_client==0.24.1
 psycopg==3.3.3
 pycparser==3.0
 PyJWT==2.11.0
 pyproject_hooks==1.2.0
+python-dotenv==1.2.2
 pywin32-ctypes==0.2.3
 RapidFuzz==3.14.3
 requests==2.32.5
