@@ -68,10 +68,13 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     "corsheaders",
     'accounts',
-    'tasks'
+    'tasks',
+    "django_prometheus"
 ]
 
 MIDDLEWARE = [
+    "django_prometheus.middleware.PrometheusBeforeMiddleware",
+    "django_prometheus.middleware.PrometheusAfterMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
