@@ -3,34 +3,34 @@ version: "3.9"
 services:
   db:
     image: postgres:15
-    container_name: taskflow_db
+    container_name: taskflow-db
     restart: always
-    enviroments:
+    environment:
       POSTGRES_DB: taskflow
-      POSTGRES_USER: taskflow_user
-      POSTGRES_PASSWORD: 12345678
-  ports: 
-    - "5432:5432"
-  volumes: 
-    - postgres_data:/var/lib/postgresql/data
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
 
   backend:
     build: .
-    container_name: taskflow_backend
-    command: python manage.py runserver 0.0.0.0:8000
+    container_name: taskflow-backend
+    command: python Backend/manage.py runserver 0.0.0.0:8000
     volumes:
-      - .:/app 
-    ports: 
+      - .:/app
+    ports:
       - "8000:8000"
     depends_on:
-      - db 
+      - db
     environment:
-      DEBUG: "True" 
-      DATABASE_NAME: taskflow
-      DATABASE_USER: postgres 
-      DATABASE_PASSWORD: 12345678
-      DATABASE_HOST: db 
-      DABATASE_PORT: 5432
+      DEBUG: "True"
+      DB_NAME: taskflow
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_HOST: db
+      DB_PORT: 5432
 
-  volumes:
-    postgres_data:
+volumes:
+  postgres_data:
